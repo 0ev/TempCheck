@@ -2,7 +2,7 @@ import requests
 from get_login_token import get_login_token
 from initialize import initialize
 
-def make_data(login_token):
+def make_data(login_token,id,password):
     return f'''-----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="__RequestVerificationToken"
 
@@ -10,11 +10,11 @@ Content-Disposition: form-data; name="__RequestVerificationToken"
 -----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="UserId"
 
-19-058
+{str(id)}
 -----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="Password"
 
-3165626
+{str(password)}
 -----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="UserType"
 
@@ -22,11 +22,7 @@ Content-Disposition: form-data; name="UserType"
 -----------------------------325333128821718686562724141506--
 '''
 
-def login(token,login_token):
-
-    cookies = {
-        '__RequestVerificationToken': token
-    }
+def login(s,login_token,id,password):
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
@@ -42,10 +38,8 @@ def login(token,login_token):
         'Cache-Control': 'no-cache',
     }
 
-    response = requests.post('https://ksa.hs.kr/Account/Login', data = make_data(login_token).encode("utf-8"), headers=headers, cookies=cookies)
+    response = s.post('https://ksa.hs.kr/Account/Login', data = make_data(login_token,id,password).encode("utf-8"), headers=headers)
 
     # print(response.cookies)
 
-# print(response.text)
-
-
+    # print(response.text)

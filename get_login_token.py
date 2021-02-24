@@ -2,14 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from initialize import initialize
 
-def get_login_token(s,token):
-
-    cookies = {
-        '_ga': 'GA1.3.652922985.1613313402',
-        '_gid': 'GA1.3.1553330226.1613979425',
-        '__RequestVerificationToken': token,
-        '_gat': '1'
-    }
+def get_login_token(s):
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
@@ -22,21 +15,13 @@ def get_login_token(s,token):
         'Cache-Control': 'no-cache',
     }
 
-    response = s.get('https://www.ksa.hs.kr/Account/Login', headers=headers, cookies=cookies)
-
-    print(response.text)
+    response = s.get('https://www.ksa.hs.kr/Account/Login', headers=headers)
 
     soup = BeautifulSoup(response.text, 'html.parser')
-
-    print(soup.find_all('input', {"name":"__RequestVerificationToken"}))
 
     result = soup.find_all('input', {"name":"__RequestVerificationToken"})[-1]["value"]
 
     print("login_token : " + result)
 
     return result
-
-with requests.Session() as s:
-    token = initialize(s)
-    get_login_token(s,token)
     

@@ -3,9 +3,14 @@ from get_login_token import get_login_token
 from initialize import initialize
 from login import login
 from check import check
+import requests
 
-token = initialize()
-login_token = get_login_token(token)
-login(token,login_token)
-check_token = get_check_token(token)
-check(token, check_token, True)
+id = "19-058"
+password = "3165626"
+
+with requests.Session() as s:
+    initialize(s)
+    login_token = get_login_token(s)
+    login(s,login_token,id,password)
+    check_token = get_check_token(s)
+    check(s, check_token, True)

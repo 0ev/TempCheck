@@ -2,8 +2,9 @@ from get_check_token import get_check_token
 from get_login_token import get_login_token
 from initialize import initialize
 from login import login
+import requests
 
-def check(token, check_token,okay):
+def check(s,check_token,okay):
 
     okay_data = {
     '__RequestVerificationToken': check_token,
@@ -49,7 +50,7 @@ def check(token, check_token,okay):
         'Cache-Control': 'no-cache',
     }
 
-    cookies = {
-        '__RequestVerificationToken': token
-    }
+    response = s.post('https://www.ksa.hs.kr/SelfHealthCheck/index/200', headers=headers, data=data)
+    print(response.text)
+
 

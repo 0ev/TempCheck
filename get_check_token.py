@@ -4,13 +4,7 @@ from initialize import initialize
 from login import login
 from bs4 import BeautifulSoup
 
-def get_check_token(token):
-
-    cookies = {
-        '_ga': 'GA1.3.652922985.1613313402',
-        '_gid': 'GA1.3.1553330226.1613979425',
-        '__RequestVerificationToken': token,
-    }
+def get_check_token(s):
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
@@ -23,15 +17,11 @@ def get_check_token(token):
         'Cache-Control': 'no-cache',
     }
 
-    response = requests.get('https://www.ksa.hs.kr/SelfHealthCheck/Index/200', headers=headers, cookies=cookies)
+    response = s.get('https://www.ksa.hs.kr/SelfHealthCheck/Index/200', headers=headers)
 
-    print(response.text)
-
-    # print(response.headers)
+    # print(response.text)
 
     soup = BeautifulSoup(response.text, 'html.parser')
-
-    print(soup.find_all('input', {"name":"__RequestVerificationToken"}))
 
     result = soup.find_all('input', {"name":"__RequestVerificationToken"})[-1]["value"]
 
