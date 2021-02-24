@@ -10,7 +10,6 @@ def get_check_token(token):
         '_ga': 'GA1.3.652922985.1613313402',
         '_gid': 'GA1.3.1553330226.1613979425',
         '__RequestVerificationToken': token,
-        '_gat': '1'
     }
 
     headers = {
@@ -26,11 +25,15 @@ def get_check_token(token):
 
     response = requests.get('https://www.ksa.hs.kr/SelfHealthCheck/Index/200', headers=headers, cookies=cookies)
 
+    print(response.text)
+
     # print(response.headers)
 
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    result = soup.find('input', {"name":"__RequestVerificationToken"})["value"]
+    print(soup.find_all('input', {"name":"__RequestVerificationToken"}))
+
+    result = soup.find_all('input', {"name":"__RequestVerificationToken"})[-1]["value"]
 
     print("check_token : " + result)
 

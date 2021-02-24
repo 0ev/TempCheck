@@ -1,6 +1,6 @@
 import requests
 
-def initialize():
+def initialize(s):
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
@@ -13,7 +13,7 @@ def initialize():
         'Cache-Control': 'no-cache',
     }
 
-    response = requests.get('https://ksa.hs.kr/Account/Login', headers=headers)
+    response = s.get('https://ksa.hs.kr/Account/Login', headers=headers)
 
     token = ""
 

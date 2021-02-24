@@ -44,8 +44,6 @@ def login(token,login_token):
 
     response = requests.post('https://ksa.hs.kr/Account/Login', data = make_data(login_token).encode("utf-8"), headers=headers, cookies=cookies)
 
-    print(response.text)
-
     # print(response.cookies)
 
 # print(response.text)
