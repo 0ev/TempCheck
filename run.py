@@ -5,12 +5,13 @@ from login import login
 from check import check
 import requests
 
-id = "id"
-password = "password"
+def run(id,password):
 
-with requests.Session() as s:
-    initialize(s)
-    login_token = get_login_token(s)
-    login(s,login_token,id,password)
-    check_token = get_check_token(s)
-    check(s, check_token, True)
+    with requests.Session() as s:
+        initialize(s)
+        login_token = get_login_token(s)
+        login(s,login_token,id,password)
+        check_token = get_check_token(s)
+        check(s, check_token, True)
+
+run("id","password")

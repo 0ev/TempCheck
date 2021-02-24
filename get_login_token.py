@@ -21,7 +21,5 @@ def get_login_token(s):
 
     result = soup.find_all('input', {"name":"__RequestVerificationToken"})[-1]["value"]
 
-    print("login_token : " + result)
-
     return result
     

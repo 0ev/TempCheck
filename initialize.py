@@ -14,12 +14,3 @@ def initialize(s):
     }
 
     response = s.get('https://ksa.hs.kr/Account/Login', headers=headers)
-
-    token = ""
-
-    for c in response.cookies:
-        token = c.value
-
-    print("init : " + token)
-
-    return token

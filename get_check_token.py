@@ -19,12 +19,8 @@ def get_check_token(s):
 
     response = s.get('https://www.ksa.hs.kr/SelfHealthCheck/Index/200', headers=headers)
 
-    # print(response.text)
-
     soup = BeautifulSoup(response.text, 'html.parser')
 
     result = soup.find_all('input', {"name":"__RequestVerificationToken"})[-1]["value"]
-
-    print("check_token : " + result)
 
     return result
