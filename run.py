@@ -5,8 +5,8 @@ from login import login
 from check import check
 import requests
 
-id = "19-058"
-password = "3165626"
+id = "id"
+password = "password"
 
 with requests.Session() as s:
     initialize(s)
