@@ -12,6 +12,7 @@ def run(id,password):
         login_token = get_login_token(s)
         login(s,login_token,id,password)
         check_token = get_check_token(s)
-        check(s, check_token, True)
-
-run("id","password")
+        result = check(s, check_token, True)
+    return result
+    
+print(run("19-058","3165626"))
