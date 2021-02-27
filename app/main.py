@@ -1,19 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from bs4 import BeautifulSoup
+import requests
 from flask import Flask
 from flask.wrappers import Request
 
 app = Flask(__name__)
 
-
-import requests
-from bs4 import BeautifulSoup
-
 global USER_AGENT
-
+global BASE_URL
+global BASE_URL2
+global LOGIN_URL
+global TEMPCHECK_URL
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
+BASE_URL = 'https://www.ksa.hs.kr'
+BASE_URL2 = 'https://www.ksa.hs.kr/'
+LOGIN_URL = 'https://ksa.hs.kr/Account/Login'
+TEMPCHECK_URL = 'https://www.ksa.hs.kr/SelfHealthCheck/Index/200'
 
 
 def initialize(s):
@@ -22,14 +27,15 @@ def initialize(s):
         'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
-        'DNT': '1',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Pragma': 'no-cache',
         'Cache-Control': 'no-cache',
+        'DNT': '1',
     }
 
-    response = s.get('https://ksa.hs.kr/Account/Login', headers=headers)
+    response = s.get(LOGIN_URL, headers=headers)
+
 
 def get_login_token(s):
 
@@ -37,23 +43,24 @@ def get_login_token(s):
         'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
-        'Referer': 'https://www.ksa.hs.kr/',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Pragma': 'no-cache',
         'Cache-Control': 'no-cache',
+        'Referer': BASE_URL2,
     }
 
     response = s.get('https://www.ksa.hs.kr/Account/Login', headers=headers)
 
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    result = soup.find_all('input', {"name":"__RequestVerificationToken"})[-1]["value"]
+    result = soup.find_all(
+        'input', {"name": "__RequestVerificationToken"})[-1]["value"]
 
     return result
 
 
-def make_data(login_token,id,password):
+def make_data(login_token, id, password):
     return f'''-----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="__RequestVerificationToken"
 
@@ -73,7 +80,8 @@ Content-Disposition: form-data; name="UserType"
 -----------------------------325333128821718686562724141506--
 '''
 
-def login(s,login_token,id,password):
+
+def login(s, login_token, id, password):
 
     headers = {
         'User-Agent': USER_AGENT,
@@ -81,15 +89,16 @@ def login(s,login_token,id,password):
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
         'Content-Type': 'multipart/form-data; boundary=---------------------------325333128821718686562724141506',
         'Origin': 'https://ksa.hs.kr',
-        'DNT': '1',
         'Connection': 'keep-alive',
-        'Referer': 'https://ksa.hs.kr/Account/Login',
         'Upgrade-Insecure-Requests': '1',
         'Pragma': 'no-cache',
         'Cache-Control': 'no-cache',
+        'DNT': '1',
+        'Referer': LOGIN_URL,
     }
 
-    response = s.post('https://ksa.hs.kr/Account/Login', data = make_data(login_token,id,password).encode("utf-8"), headers=headers)
+    response = s.post(LOGIN_URL, data=make_data(
+        login_token, id, password).encode("utf-8"), headers=headers)
 
 
 def get_check_token(s):
@@ -98,53 +107,38 @@ def get_check_token(s):
         'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
-        'Referer': 'https://www.ksa.hs.kr/',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Pragma': 'no-cache',
         'Cache-Control': 'no-cache',
+        'Referer': BASE_URL2,
     }
 
-    response = s.get('https://www.ksa.hs.kr/SelfHealthCheck/Index/200', headers=headers)
+    response = s.get(
+        TEMPCHECK_URL, headers=headers)
 
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    result = soup.find_all('input', {"name":"__RequestVerificationToken"})[-1]["value"]
+    result = soup.find_all(
+        'input', {"name": "__RequestVerificationToken"})[-1]["value"]
 
     return result
 
-def check(s,check_token,okay):
 
-    okay_data = {
-    '__RequestVerificationToken': check_token,
-    'SelfCheckItemDatas[0].Order': '1',
-    'SelfCheckItemDatas[1].Order': '2',
-    'SelfCheckItemDatas[2].Order': '3',
-    'survey_q1': 'False',
-    'SelfCheckItemDatas[0].CheckResultValues[0]': '0',
-    'survey_q2': 'False',
-    'SelfCheckItemDatas[1].CheckResultValues[0]': '0',
-    'survey_q3': 'False',
-    'SelfCheckItemDatas[2].CheckResultValues[0]': '0'
+def check(s, check_token, has_symtom):
+    # True:sick / False: normal
+    data = {
+        '__RequestVerificationToken': check_token,
+        'survey_q1': str(has_symtom[0]),
+        'survey_q2': str(has_symtom[1]),
+        'survey_q3': str(has_symtom[2]),
+        'SelfCheckItemDatas[0].Order': '1',
+        'SelfCheckItemDatas[1].Order': '2',
+        'SelfCheckItemDatas[2].Order': '3',
+        'SelfCheckItemDatas[0].CheckResultValues[0]': '1' if has_symtom[0] else '0',
+        'SelfCheckItemDatas[1].CheckResultValues[0]': '1' if has_symtom[0] else '0',
+        'SelfCheckItemDatas[2].CheckResultValues[0]': '1' if has_symtom[0] else '0'
     }
-
-    not_okay_data = {
-    '__RequestVerificationToken': check_token,
-    'SelfCheckItemDatas[0].Order': '1',
-    'SelfCheckItemDatas[1].Order': '2',
-    'SelfCheckItemDatas[2].Order': '3',
-    'survey_q1': 'True',
-    'SelfCheckItemDatas[0].CheckResultValues[0]': '1',
-    'survey_q2': 'True',
-    'SelfCheckItemDatas[1].CheckResultValues[0]': '1',
-    'survey_q3': 'True',
-    'SelfCheckItemDatas[2].CheckResultValues[0]': '1'
-    }
-
-    if okay:
-        data = okay_data
-    elif not okay:
-        data = not_okay_data
 
     headers = {
         'User-Agent': USER_AGENT,
@@ -152,79 +146,65 @@ def check(s,check_token,okay):
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'X-Requested-With': 'XMLHttpRequest',
-        'Origin': 'https://www.ksa.hs.kr',
+        'Origin': BASE_URL,
         'Connection': 'keep-alive',
-        'Referer': 'https://www.ksa.hs.kr/SelfHealthCheck/Index/200',
+        'Referer': TEMPCHECK_URL,
         'Pragma': 'no-cache',
         'Cache-Control': 'no-cache',
     }
-
-    response = s.post('https://www.ksa.hs.kr/SelfHealthCheck/index/200', headers=headers, data=data)
+    
+    response = s.post(TEMPCHECK_URL, headers=headers, data=data)
     return response.json()
 
 
-def run(id,password):
-
+def run(id, password):
     with requests.Session() as s:
         initialize(s)
         login_token = get_login_token(s)
-        login(s,login_token,id,password)
+        login(s, login_token, id, password)
         check_token = get_check_token(s)
         result = check(s, check_token, True)
     return result
 
-@app.route('/', methods = ['POST','GET'])
-def api():
-    st = "어케옴?"
-    st = st.encode("utf-8")
-    return st
 
-@app.route('/api', methods = ['POST'])
+@app.route('/', methods=['POST', 'GET'])
+def api():
+    return "어케옴?".encode("utf-8")
+
+
+@app.route('/api', methods=['POST'])
 def test():
     data = request.get_json()
+    user_id = data["id"]
+    user_pw = data["password"]
 
-    id = data["id"]
-    password = data["password"]
+    tryTempCheck(user_id, user_pw)
 
-    try:
-        result = run(id,password)
 
-        if result["result"] == -1:
-            st = "벌써 체온체크를 하였습니다"
-            st = st.encode("utf-8")
-            return st
-        if result["result"] == 1:
-            st = "성공하였습니다"
-            st = st.encode("utf-8")
-            return st
-
-    except:
-        st = "비밀번호나 아이디가 잘못되었습니다 다시 시도해주세요"
-        st = st.encode("utf-8")
-        return st
-    
-@app.route('/test/<data>', methods = ['GET'])
+@app.route('/test/<data>', methods=['GET'])
 def test2(data):
+    user_id = data.split("|")[0]
+    user_pw = data.split("|")[1]
 
-    id = data.split("|")[0]
-    password = data.split("|")[1]
+    tryTempCheck(user_id, user_pw)
 
+
+def tryTempCheck(user_id, user_pw):
+    MSG_ALREADY = "이미 체온체크를 하셨습니다"
+    MSG_SUCCESS = "성공하셨습니다"
+    MSG_ERROR = "비밀번호나 아이디가 잘못되었으니 다시 시도해주세요"
+    MSG_UNKNOWN = "예상치 못한 상황입니다"
     try:
-        result = run(id,password)
-        
+        result = run(user_id, user_pw)
         if result["result"] == -1:
-            st = "벌써 체온체크를 하였습니다"
-            st = st.encode("utf-8")
-            return st
-        if result["result"] == 1:
-            st = "성공하였습니다"
-            st = st.encode("utf-8")
-            return st
+            return MSG_ALREADY.encode("utf-8")
+        elif result["result"] == 1:
+            return MSG_SUCCESS.encode("utf-8")
+        else:
+            return MSG_SUCCESS.encode("utf-8")
+    except Exception:
+        return MSG_ERROR.encode("utf-8")
 
-    except:
-        st = "비밀번호나 아이디가 잘못되었습니다 다시 시도해주세요"
-        st = st.encode("utf-8")
-        return st
 
 if __name__ == '__main__':
     app.run()
