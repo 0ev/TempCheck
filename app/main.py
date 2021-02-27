@@ -8,59 +8,48 @@ from flask.wrappers import Request
 
 app = Flask(__name__)
 
-global USER_AGENT
 global BASE_URL
 global BASE_URL2
 global LOGIN_URL
 global TEMPCHECK_URL
+global OVERLAPPED_HEADER
 
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
 BASE_URL = 'https://www.ksa.hs.kr'
 BASE_URL2 = 'https://www.ksa.hs.kr/'
 LOGIN_URL = 'https://ksa.hs.kr/Account/Login'
 TEMPCHECK_URL = 'https://www.ksa.hs.kr/SelfHealthCheck/Index/200'
 
+OVERLAPPED_HEADER = {
+    'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache',
+}
+
 
 def initialize(s):
-
-    headers = {
-        'User-Agent': USER_AGENT,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache',
-        'DNT': '1',
-    }
-
+    headers = OVERLAPPED_HEADER.copy()
+    headers['DNT'] = '1'
     response = s.get(LOGIN_URL, headers=headers)
 
 
 def get_login_token(s):
+    headers = OVERLAPPED_HEADER.copy()
+    headers['Referer'] = BASE_URL2
 
-    headers = {
-        'User-Agent': USER_AGENT,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache',
-        'Referer': BASE_URL2,
-    }
-
-    response = s.get('https://www.ksa.hs.kr/Account/Login', headers=headers)
+    response = s.get('https://www.ksa.hs.kr/Account/Login',
+                     headers=headers)  # change link? => LOGIN_URL
 
     soup = BeautifulSoup(response.text, 'html.parser')
-
-    result = soup.find_all(
+    login_token = soup.find_all(
         'input', {"name": "__RequestVerificationToken"})[-1]["value"]
+    return login_token
 
-    return result
 
-
-def make_data(login_token, id, password):
+def make_data(login_token, user_id, user_pw):
     return f'''-----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="__RequestVerificationToken"
 
@@ -68,11 +57,11 @@ Content-Disposition: form-data; name="__RequestVerificationToken"
 -----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="UserId"
 
-{str(id)}
+{str(user_id)}
 -----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="Password"
 
-{str(password)}
+{str(user_pw)}
 -----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="UserType"
 
@@ -81,48 +70,34 @@ Content-Disposition: form-data; name="UserType"
 '''
 
 
-def login(s, login_token, id, password):
+def login(s, login_token, user_id, user_pw):
+    headers = OVERLAPPED_HEADER.copy()
 
-    headers = {
-        'User-Agent': USER_AGENT,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
-        'Content-Type': 'multipart/form-data; boundary=---------------------------325333128821718686562724141506',
+    update_header = {
         'Origin': 'https://ksa.hs.kr',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache',
         'DNT': '1',
+        'Content-Type': 'multipart/form-data; boundary=---------------------------325333128821718686562724141506',
         'Referer': LOGIN_URL,
     }
 
-    response = s.post(LOGIN_URL, data=make_data(
-        login_token, id, password).encode("utf-8"), headers=headers)
+    headers.update(update_header)
+
+    login_data = make_data(login_token, user_id, user_pw).encode("utf-8")
+
+    response = s.post(LOGIN_URL, data=login_data, headers=headers)
 
 
 def get_check_token(s):
 
-    headers = {
-        'User-Agent': USER_AGENT,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache',
-        'Referer': BASE_URL2,
-    }
+    headers = OVERLAPPED_HEADER.copy()
+    headers['Referer'] = BASE_URL2,
 
-    response = s.get(
-        TEMPCHECK_URL, headers=headers)
+    response = s.get(TEMPCHECK_URL, headers=headers)
 
     soup = BeautifulSoup(response.text, 'html.parser')
-
-    result = soup.find_all(
+    check_token = soup.find_all(
         'input', {"name": "__RequestVerificationToken"})[-1]["value"]
-
-    return result
+    return check_token
 
 
 def check(s, check_token, has_symtom):
@@ -141,27 +116,27 @@ def check(s, check_token, has_symtom):
     }
 
     headers = {
-        'User-Agent': USER_AGENT,
+        'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0",
         'Accept': '*/*',
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
+        'Connection': 'keep-alive',
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'X-Requested-With': 'XMLHttpRequest',
         'Origin': BASE_URL,
-        'Connection': 'keep-alive',
         'Referer': TEMPCHECK_URL,
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache',
     }
-    
+
     response = s.post(TEMPCHECK_URL, headers=headers, data=data)
     return response.json()
 
 
-def run(id, password):
+def run(user_id, user_pw):
     with requests.Session() as s:
         initialize(s)
         login_token = get_login_token(s)
-        login(s, login_token, id, password)
+        login(s, login_token, user_id, user_pw)
         check_token = get_check_token(s)
         result = check(s, check_token, True)
     return result
