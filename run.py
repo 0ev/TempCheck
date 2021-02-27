@@ -1,11 +1,16 @@
 import requests
-import requests
 from bs4 import BeautifulSoup
+
+global USER_AGENT
+
+
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0"
+
 
 def initialize(s):
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
+        'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
         'DNT': '1',
@@ -20,7 +25,7 @@ def initialize(s):
 def get_login_token(s):
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
+        'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
         'Referer': 'https://www.ksa.hs.kr/',
@@ -62,7 +67,7 @@ Content-Disposition: form-data; name="UserType"
 def login(s,login_token,id,password):
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
+        'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
         'Content-Type': 'multipart/form-data; boundary=---------------------------325333128821718686562724141506',
@@ -77,14 +82,11 @@ def login(s,login_token,id,password):
 
     response = s.post('https://ksa.hs.kr/Account/Login', data = make_data(login_token,id,password).encode("utf-8"), headers=headers)
 
-    # print(response.cookies)
-
-    # print(response.text)
 
 def get_check_token(s):
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
+        'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
         'Referer': 'https://www.ksa.hs.kr/',
@@ -136,7 +138,7 @@ def check(s,check_token,okay):
         data = not_okay_data
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:85.0) Gecko/20100101 Firefox/85.0',
+        'User-Agent': USER_AGENT,
         'Accept': '*/*',
         'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -161,3 +163,4 @@ def run(id,password):
         check_token = get_check_token(s)
         result = check(s, check_token, True)
     return result
+
