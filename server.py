@@ -6,7 +6,9 @@ app = Flask(__name__)
 
 @app.route('/', methods = ['POST','GET'])
 def api():
-    return "어케옴?"
+    st = "어케옴?"
+    st = st.encode("utf-8")
+    return st
 
 @app.route('/api', methods = ['POST'])
 def test():
@@ -19,12 +21,18 @@ def test():
         result = run(id,password)
 
         if result["result"] == -1:
-            return "벌써 체온체크를 하였습니다"
+            st = "벌써 체온체크를 하였습니다"
+            st = st.encode("utf-8")
+            return st
         if result["result"] == 1:
-            return "성공하였습니다"
+            st = "성공하였습니다"
+            st = st.encode("utf-8")
+            return st
 
     except:
-        return "비밀번호나 아이디가 잘못되었습니다 다시 시도해주세요"
+        st = "비밀번호나 아이디가 잘못되었습니다 다시 시도해주세요"
+        st = st.encode("utf-8")
+        return st
     
 @app.route('/test/<data>', methods = ['GET'])
 def test2(data):
@@ -36,12 +44,18 @@ def test2(data):
         result = run(id,password)
         
         if result["result"] == -1:
-            return "벌써 체온체크를 하였습니다"
+            st = "벌써 체온체크를 하였습니다"
+            st = st.encode("utf-8")
+            return st
         if result["result"] == 1:
-            return "성공하였습니다"
+            st = "성공하였습니다"
+            st = st.encode("utf-8")
+            return st
 
     except:
-        return "비밀번호나 아이디가 잘못되었습니다 다시 시도해주세요"
+        st = "비밀번호나 아이디가 잘못되었습니다 다시 시도해주세요"
+        st = st.encode("utf-8")
+        return st
 
 if __name__ == '__main__':
     app.run()
