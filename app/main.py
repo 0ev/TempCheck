@@ -30,25 +30,6 @@ OVERLAPPED_HEADER = {
 }
 
 
-def initialize(s):
-    headers = OVERLAPPED_HEADER.copy()
-    headers['DNT'] = '1'
-    response = s.get(LOGIN_URL, headers=headers)
-
-
-def get_login_token(s):
-    headers = OVERLAPPED_HEADER.copy()
-    headers['Referer'] = BASE_URL2
-
-    response = s.get('https://www.ksa.hs.kr/Account/Login',
-                     headers=headers)  # change link? => LOGIN_URL
-
-    soup = BeautifulSoup(response.text, 'html.parser')
-    login_token = soup.find_all(
-        'input', {"name": "__RequestVerificationToken"})[-1]["value"]
-    return login_token
-
-
 def make_data(login_token, user_id, user_pw):
     return f'''-----------------------------325333128821718686562724141506
 Content-Disposition: form-data; name="__RequestVerificationToken"
@@ -70,28 +51,40 @@ Content-Disposition: form-data; name="UserType"
 '''
 
 
-def login(s, login_token, user_id, user_pw):
+def initialize(s):
     headers = OVERLAPPED_HEADER.copy()
+    headers['DNT'] = '1'
+    response = s.get(LOGIN_URL, headers=headers)
 
+
+def get_login_token(s):
+    headers = OVERLAPPED_HEADER.copy()
+    headers['Referer'] = BASE_URL2
+    response = s.get('https://www.ksa.hs.kr/Account/Login',
+                     headers=headers)  # change link? => LOGIN_URL
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    login_token = soup.find_all(
+        'input', {"name": "__RequestVerificationToken"})[-1]["value"]
+    return login_token
+
+
+def login(s, login_token, user_id, user_pw):
+    login_data = make_data(login_token, user_id, user_pw).encode("utf-8")
+    headers = OVERLAPPED_HEADER.copy()
     update_header = {
-        'Origin': 'https://ksa.hs.kr',
+        'Origin': 'https://ksa.hs.kr',  # change link?
         'DNT': '1',
         'Content-Type': 'multipart/form-data; boundary=---------------------------325333128821718686562724141506',
         'Referer': LOGIN_URL,
     }
-
     headers.update(update_header)
-
-    login_data = make_data(login_token, user_id, user_pw).encode("utf-8")
-
     response = s.post(LOGIN_URL, data=login_data, headers=headers)
 
 
 def get_check_token(s):
-
     headers = OVERLAPPED_HEADER.copy()
     headers['Referer'] = BASE_URL2,
-
     response = s.get(TEMPCHECK_URL, headers=headers)
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -127,24 +120,41 @@ def check(s, check_token, has_symtom):
         'Origin': BASE_URL,
         'Referer': TEMPCHECK_URL,
     }
-
     response = s.post(TEMPCHECK_URL, headers=headers, data=data)
     return response.json()
 
 
-def run(user_id, user_pw):
+def run(user_id, user_pw, has_symtom=(False, False, False)):
     with requests.Session() as s:
         initialize(s)
         login_token = get_login_token(s)
         login(s, login_token, user_id, user_pw)
         check_token = get_check_token(s)
-        result = check(s, check_token, True)
+        result = check(s, check_token, has_symtom)
     return result
 
 
 @app.route('/', methods=['POST', 'GET'])
 def api():
     return "어케옴?".encode("utf-8")
+
+
+def tryTempCheck(user_id, user_pw):
+    MSG_ALREADY = "이미 체온체크를 하셨습니다".encode("utf-8")
+    MSG_SUCCESS = "성공하셨습니다".encode("utf-8")
+    MSG_ERROR = "비밀번호나 아이디가 잘못되었으니 다시 시도해주세요".encode("utf-8")
+    MSG_UNKNOWN = "예상치 못한 상황입니다".encode("utf-8")
+
+    try:
+        result = run(user_id, user_pw)
+        if result["result"] == -1:
+            return MSG_ALREADY
+        elif result["result"] == 1:
+            return MSG_SUCCESS
+        else:
+            return MSG_SUCCESS
+    except Exception:
+        return MSG_ERROR
 
 
 @app.route('/api', methods=['POST'])
@@ -162,23 +172,6 @@ def test2(data):
     user_pw = data.split("|")[1]
 
     tryTempCheck(user_id, user_pw)
-
-
-def tryTempCheck(user_id, user_pw):
-    MSG_ALREADY = "이미 체온체크를 하셨습니다"
-    MSG_SUCCESS = "성공하셨습니다"
-    MSG_ERROR = "비밀번호나 아이디가 잘못되었으니 다시 시도해주세요"
-    MSG_UNKNOWN = "예상치 못한 상황입니다"
-    try:
-        result = run(user_id, user_pw)
-        if result["result"] == -1:
-            return MSG_ALREADY.encode("utf-8")
-        elif result["result"] == 1:
-            return MSG_SUCCESS.encode("utf-8")
-        else:
-            return MSG_SUCCESS.encode("utf-8")
-    except Exception:
-        return MSG_ERROR.encode("utf-8")
 
 
 if __name__ == '__main__':
