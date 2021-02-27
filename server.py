@@ -3,7 +3,7 @@
 
 from flask import Flask
 from flask.wrappers import Request
-from run import run
+from .run import run
 
 app = Flask(__name__)
 
